@@ -28,7 +28,9 @@
     "typecheck": "tsc --noEmit --pretty",
     "prepublishOnly": "yarn validate && yarn build",
     "deduplicate": "npx yarn-deduplicate --list --fail",
-    "validate": "yarn format"
+    "validate": "yarn format",
+    "force-close-perp": "ts-node ts/client/scripts/force-close-perp-positions.ts",
+    "perp-sanity-check": "ts-node ts/client/scripts/perp-sanity-check.ts"
   },
   "devDependencies": {
     "@solana/spl-governance": "^0.3.25",

@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import { MangoClient } from '../src/client';
 import { MANGO_V4_ID } from '../src/constants';
 import { toUiDecimalsForQuote } from '../src/utils';
+
 dotenv.config();
 
 const CLUSTER_URL =
@@ -43,49 +44,49 @@ async function main(): Promise<void> {
           getUnsettledPnlUiAgg +=
             pp.getUnsettledPnlUi(perpMarket) -
             pp.getUnsettledFundingUi(perpMarket);
-          getBasePositionUiAgg += pp.getBasePositionUi(perpMarket);
+          getBasePositionUiAgg += pp.getBasePositionUi(perpMarket, true);
           getQuotePositionUiAgg += pp.getQuotePositionUi(perpMarket);
           longSettledFundingAgg += pp.longSettledFunding.toNumber();
           shortSettledFundingAgg += pp.shortSettledFunding.toNumber();
         }
       });
 
-      // console.log(
-      //   `- longSettledFundingAgg - shortSettledFunding ${(
-      //     longSettledFundingAgg - shortSettledFundingAgg
-      //   )
-      //     .toFixed(4)
-      //     .padStart(10)}`,
-      // );
-      // console.log(
-      //   `- unsettled pnl aggr ${getUnsettledPnlUiAgg.toFixed(4).padStart(10)}`,
-      // );
-      // console.log(
-      //   `- base position aggr ${getBasePositionUiAgg.toFixed(4).padStart(10)}`,
-      // );
-      // console.log(
-      //   `- quote position aggr ${getQuotePositionUiAgg
-      //     .toFixed(4)
-      //     .padStart(10)}`,
-      // );
-      // console.log(
-      //   `- base position aggr * price ${(
-      //     getBasePositionUiAgg * perpMarket.uiPrice
-      //   )
-      //     .toFixed(4)
-      //     .padStart(10)}`,
-      // );
-      // console.log(
-      //   `- perp.feesAccrued ${toUiDecimalsForQuote(perpMarket.feesAccrued)}`,
-      // );
-      // console.log(
-      //   `- unsettled pnl aggr - base position aggr * price ${(
-      //     getUnsettledPnlUiAgg -
-      //     getBasePositionUiAgg * perpMarket.uiPrice
-      //   )
-      //     .toFixed(4)
-      //     .padStart(10)}`,
-      // );
+      console.log(
+        `- longSettledFundingAgg - shortSettledFunding ${(
+          longSettledFundingAgg - shortSettledFundingAgg
+        )
+          .toFixed(4)
+          .padStart(10)}`,
+      );
+      console.log(
+        `- unsettled pnl aggr ${getUnsettledPnlUiAgg.toFixed(4).padStart(10)}`,
+      );
+      console.log(
+        `- base position aggr ${getBasePositionUiAgg.toFixed(4).padStart(10)}`,
+      );
+      console.log(
+        `- quote position aggr ${getQuotePositionUiAgg
+          .toFixed(4)
+          .padStart(10)}`,
+      );
+      console.log(
+        `- base position aggr * price ${(
+          getBasePositionUiAgg * perpMarket.uiPrice
+        )
+          .toFixed(4)
+          .padStart(10)}`,
+      );
+      console.log(
+        `- perp.feesAccrued ${toUiDecimalsForQuote(perpMarket.feesAccrued)}`,
+      );
+      console.log(
+        `- unsettled pnl aggr - base position aggr * price ${(
+          getUnsettledPnlUiAgg -
+          getBasePositionUiAgg * perpMarket.uiPrice
+        )
+          .toFixed(4)
+          .padStart(10)}`,
+      );
       console.log(
         `- perp.feesAccrued  + unsettled pnl aggr ${
           toUiDecimalsForQuote(perpMarket.feesAccrued) + getUnsettledPnlUiAgg
