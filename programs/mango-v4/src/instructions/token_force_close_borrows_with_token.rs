@@ -56,14 +56,11 @@ pub fn token_force_close_borrows_with_token(
         // account constraint #2
         require!(liab_bank.is_force_close(), MangoError::TokenInForceClose);
 
-        // We might create asset borrows, so forbid asset tokens that don't allow them.
-        require!(
-            !asset_bank.are_borrows_reduce_only(),
-            MangoError::TokenInReduceOnlyMode
-        );
-
+        // fee_factor_liqor = (1 + liab_liq_fee) * (1 + asset_liq_fee)
         let fee_factor_liqor =
             (I80F48::ONE + liab_bank.liquidation_fee) * (I80F48::ONE + asset_bank.liquidation_fee);
+
+        // fee_factor_total = (1 + liab_liq_fee + liab_pliq_fee) * (1 + asset_liq_fee + asset_pliq_fee)
         let fee_factor_total =
             (I80F48::ONE + liab_bank.liquidation_fee + liab_bank.platform_liquidation_fee)
                 * (I80F48::ONE + asset_bank.liquidation_fee + asset_bank.platform_liquidation_fee);
@@ -133,6 +130,12 @@ pub fn token_force_close_borrows_with_token(
         )?;
         let liqee_asset_indexed_position = liqee_asset_position.indexed_position;
         let liqee_assets_native_after = liqee_asset_position.native(asset_bank);
+
+        // Make sure we do not create borrows in asset token if asset token is in reduce only
+        require!(
+            !(asset_bank.are_borrows_reduce_only() && liqee_assets_native_after.is_negative()),
+            MangoError::TokenInReduceOnlyMode
+        );
 
         msg!(
             "Force closed {} liab for {} asset",
