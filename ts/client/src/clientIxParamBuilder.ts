@@ -417,6 +417,7 @@ export function buildIxGate(p: IxGateParams): BN {
     }
     ixGate.ior(p[propName] ? new BN(0) : new BN(1).ushln(index));
   }
+
   toggleIx(ixGate, p, 'AccountClose', 0);
   toggleIx(ixGate, p, 'AccountCreate', 1);
   toggleIx(ixGate, p, 'AccountEdit', 2);
@@ -493,6 +494,7 @@ export function buildIxGate(p: IxGateParams): BN {
   toggleIx(ixGate, p, 'SequenceCheck', 73);
   toggleIx(ixGate, p, 'HealthCheck', 74);
   toggleIx(ixGate, p, 'GroupChangeInsuranceFund', 76);
+  toggleIx(ixGate, p, 'PerpForceCloseUnmatched', 77);
 
   return ixGate;
 }
