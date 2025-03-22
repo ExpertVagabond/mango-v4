@@ -317,6 +317,8 @@ export interface IxGateParams {
   SequenceCheck: boolean;
   HealthCheck: boolean;
   GroupChangeInsuranceFund: boolean;
+  PerpForceCloseUnmatched: boolean;
+  PerpSettleUnmatched: boolean;
 }
 
 // Default with all ixs enabled, use with buildIxGate
@@ -400,6 +402,8 @@ export const TrueIxGateParams: IxGateParams = {
   SequenceCheck: true,
   HealthCheck: true,
   GroupChangeInsuranceFund: true,
+  PerpForceCloseUnmatched: true,
+  PerpSettleUnmatched: true,
 };
 
 // build ix gate e.g. buildIxGate(Builder(TrueIxGateParams).TokenDeposit(false).build()).toNumber(),
@@ -495,6 +499,7 @@ export function buildIxGate(p: IxGateParams): BN {
   toggleIx(ixGate, p, 'HealthCheck', 74);
   toggleIx(ixGate, p, 'GroupChangeInsuranceFund', 76);
   toggleIx(ixGate, p, 'PerpForceCloseUnmatched', 77);
+  toggleIx(ixGate, p, 'PerpSettleUnmatched', 78);
 
   return ixGate;
 }

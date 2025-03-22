@@ -1,9 +1,7 @@
 import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
 import { Cluster, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import * as dotenv from 'dotenv';
-import { MangoClient } from '../src/client';
-import { MANGO_V4_ID } from '../src/constants';
-import { toUiDecimalsForQuote } from '../src/utils';
+import { MANGO_V4_ID, MangoClient, toUiDecimalsForQuote } from '../src';
 
 dotenv.config();
 
