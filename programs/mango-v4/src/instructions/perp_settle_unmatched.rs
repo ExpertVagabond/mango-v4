@@ -4,14 +4,15 @@ use fixed::types::I80F48;
 
 use crate::accounts_zerocopy::*;
 use crate::error::*;
-use crate::health::{compute_health, new_fixed_order_account_retriever, HealthType};
 use crate::state::*;
 
 use crate::accounts_ix::*;
-use crate::logs::{emit_perp_balances, emit_stack, PerpSettleFeesLog, TokenBalanceLog};
-use crate::util::clock_now;
+use crate::logs::{emit_perp_balances, emit_stack, TokenBalanceLog};
 
-pub fn perp_settle_fees(ctx: Context<PerpSettleFees>, max_settle_amount: u64) -> Result<()> {
+pub fn perp_settle_unmatched(
+    ctx: Context<PerpSettleUnmatched>,
+    max_settle_amount: u64,
+) -> Result<()> {
     // max_settle_amount must greater than zero
     require!(
         max_settle_amount > 0,
@@ -20,7 +21,7 @@ pub fn perp_settle_fees(ctx: Context<PerpSettleFees>, max_settle_amount: u64) ->
 
     let mut account = ctx.accounts.account.load_full_mut()?;
     let mut settle_bank = ctx.accounts.settle_bank.load_mut()?;
-    let mut perp_market = ctx.accounts.perp_market.load_mut()?;
+    let perp_market = ctx.accounts.perp_market.load()?;
 
     require_msg!(
         perp_market.is_force_close(),

@@ -9,7 +9,7 @@ pub struct PerpSettleUnmatched<'info> {
     )]
     pub group: AccountLoader<'info, Group>,
 
-    #[account(mut, has_one = group, has_one = oracle)]
+    #[account(has_one = group, has_one = oracle)]
     pub perp_market: AccountLoader<'info, PerpMarket>,
 
     // This account MUST have a loss
