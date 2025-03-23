@@ -74,6 +74,7 @@ function spotAmountTakenForHealthZero(
   return takenSpot;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function spotAmountGivenForHealthZero(
   health: I80F48,
   startingSpot: I80F48,
@@ -174,7 +175,7 @@ export class HealthCache {
     // For each token, compute the sum of serum-reserved amounts over all markets.
     const tokenMaxReserved = new Array(this.tokenInfos.length)
       .fill(null)
-      .map((ignored) => new TokenMaxReserved(ZERO_I80F48()));
+      .map(() => new TokenMaxReserved(ZERO_I80F48()));
 
     // For each serum market, compute what happened if reserved_base was converted to quote
     // or reserved_quote was converted to base.
@@ -241,7 +242,7 @@ export class HealthCache {
   ): TokenBalance[] {
     const tokenBalances = new Array(this.tokenInfos.length)
       .fill(null)
-      .map((ignored) => new TokenBalance(ZERO_I80F48()));
+      .map(() => new TokenBalance(ZERO_I80F48()));
 
     for (const perpInfo of this.perpInfos) {
       const settleTokenIndex = this.findTokenInfoIndex(
@@ -270,7 +271,7 @@ export class HealthCache {
   ): TokenBalanceDisplay[] {
     const tokenBalances = new Array(this.tokenInfos.length)
       .fill(null)
-      .map((ignored) => new TokenBalanceDisplay(ZERO_I80F48(), 0, []));
+      .map(() => new TokenBalanceDisplay(ZERO_I80F48(), 0, []));
 
     for (const perpInfo of this.perpInfos) {
       const settleTokenIndex = this.findTokenInfoIndex(
@@ -728,6 +729,7 @@ export class HealthCache {
     const maxIterations = 50;
     let current = start;
     // console.log(`scanRightUntilLessThan, start ${start.toLocaleString()}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const key of Array(maxIterations).fill(0).keys()) {
       const value = fun(current);
       if (value.lt(target)) {
@@ -948,8 +950,6 @@ export class HealthCache {
     // - even if initial value is < 0, swapping can increase health (maybe above 0)
     // - be careful about finding the minFnValue: the function isn't convex
 
-    const initialRatio = this.healthRatio(HealthType.init);
-
     const healthCacheClone: HealthCache = deepClone<HealthCache>(this);
     const sourceIndex = healthCacheClone.getOrCreateTokenInfoIndex(sourceBank);
     const targetIndex = healthCacheClone.getOrCreateTokenInfoIndex(targetBank);
@@ -1159,6 +1159,7 @@ export class HealthCache {
     const cache = cacheAfterPlacingOrder(zeroAmount);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const zeroAmountHealth = cache.health(HealthType.init);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const zeroAmountRatio = cache.healthRatio(HealthType.init);
 
     // console.log(` - zeroAmount ${zeroAmount.toLocaleString()}`);
@@ -1171,13 +1172,15 @@ export class HealthCache {
       // adjustedCache.logHealthCache(` before placing order ${amount}`);
       // TODO: there should also be some issue with oracle vs stable price here;
       // probably better to pass in not the quote amount but the base or quote native amount
-      side === Serum3Side.ask
-        ? adjustedCache.tokenInfos[baseIndex].balanceSpot.isub(
-            amount.div(base.prices.oracle),
-          )
-        : adjustedCache.tokenInfos[quoteIndex].balanceSpot.isub(
-            amount.div(quote.prices.oracle),
-          );
+      if (side === Serum3Side.ask) {
+        adjustedCache.tokenInfos[baseIndex].balanceSpot.isub(
+          amount.div(base.prices.oracle),
+        );
+      } else {
+        adjustedCache.tokenInfos[quoteIndex].balanceSpot.isub(
+          amount.div(quote.prices.oracle),
+        );
+      }
       adjustedCache.adjustSerum3Reserved(
         baseBank,
         quoteBank,
@@ -1258,16 +1261,19 @@ export class HealthCache {
       return adjustedCache;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function healthAfterTrade(baseLots: I80F48): I80F48 {
       return cacheAfterTrade(new BN(baseLots.toNumber())).health(
         HealthType.init,
       );
     }
+
     function healthRatioAfterTrade(baseLots: I80F48): I80F48 {
       return cacheAfterTrade(new BN(baseLots.toNumber())).healthRatio(
         HealthType.init,
       );
     }
+
     function healthRatioAfterTradeTrunc(baseLots: I80F48): I80F48 {
       return healthRatioAfterTrade(baseLots.floor());
     }
@@ -1628,7 +1634,9 @@ export class Serum3Info {
 
     const baseInfo = tokenInfos[this.baseInfoIndex];
     const quoteInfo = tokenInfos[this.quoteInfoIndex];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const baseMaxReserved = tokenMaxReserved[this.baseInfoIndex];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const quoteMaxReserved = tokenMaxReserved[this.quoteInfoIndex];
 
     // How much the health would increase if the reserved balance were applied to the passed

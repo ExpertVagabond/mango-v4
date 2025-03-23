@@ -4725,6 +4725,7 @@ export class MangoClient {
 
     return ixs;
   }
+
   public async tokenConditionalSwapCreatePremiumAuction(
     group: Group,
     account: MangoAccount,
@@ -5226,9 +5227,7 @@ export class MangoClient {
       tokenPositionIndices
         .filter((tokenIndex) => tokenIndex !== TokenPosition.TokenIndexUnset)
         .map((tokenIndex) => group.mintInfosMapByTokenIndex.get(tokenIndex)!),
-      (mintInfo) => {
-        mintInfo.tokenIndex;
-      },
+      (mintInfo) => mintInfo.tokenIndex,
     );
     healthRemainingAccounts.push(
       ...mintInfos.map((mintInfo) => mintInfo.firstBank()),
@@ -5424,6 +5423,7 @@ export class MangoClient {
       transactionInstructions,
     );
   }
+
   public async modifySerum3Order(
     group: Group,
     orderId: BN,

@@ -20,7 +20,9 @@ export interface QuoteParams {
   amount: number;
   swapMode: SwapMode;
 }
+
 export declare type TokenMintAddress = string;
+
 export interface Quote {
   notEnoughLiquidity: boolean;
   minInAmount?: number;
@@ -32,7 +34,9 @@ export interface Quote {
   feePct: number;
   priceImpactPct: number;
 }
+
 export declare type QuoteMintToReferrer = Map<TokenMintAddress, string>;
+
 export interface SwapParams {
   sourceMint: string;
   destinationMint: string;
@@ -47,16 +51,19 @@ export interface SwapParams {
   openOrdersAddress?: string;
   quoteMintToReferrer?: QuoteMintToReferrer;
 }
+
 export declare type PlatformFee = {
   feeBps: number;
   feeAccount: string;
 };
+
 export interface ExactOutSwapParams extends SwapParams {
   inAmount: number;
   slippageBps: number;
   platformFee?: PlatformFee;
   overflowFeeAccount?: string;
 }
+
 export declare type AccountInfoMap = Map<string, AccountInfo<Buffer> | null>;
 
 export declare type AmmLabel =
@@ -107,6 +114,7 @@ export interface Fee {
   mint: string;
   pct: number;
 }
+
 export interface MarketInfo {
   id: string;
   inAmount: number;
@@ -289,7 +297,7 @@ export const fetchRoutes = async (
       routes: sortedBestQuoteFirst,
       bestRoute: sortedBestQuoteFirst[0],
     };
-  } catch (e) {
+  } catch {
     return {
       routes: [],
       bestRoute: null,

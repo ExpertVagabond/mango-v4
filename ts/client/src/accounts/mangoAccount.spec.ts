@@ -66,6 +66,7 @@ describe('Mango Account', () => {
     );
 
     // Expected u can sell max 0.01 sol for 1 USDC
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     expect(
       toUiDecimals(maxSourceForUSDCTarget, mockedSOLBank.mintDecimals).toFixed(
         2,
@@ -73,6 +74,7 @@ describe('Mango Account', () => {
     ).to.be.true;
 
     // Expected u can buy max of 0.49 SOL for 49 USDC
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     expect(
       toUiDecimals(maxSourceForSOLTarget, mockedUSDCBank.mintDecimals).toFixed(
         0,
@@ -134,9 +136,11 @@ describe('maxWithdraw', () => {
     maintWeights() {
       return [I80F48.fromNumber(0.9), I80F48.fromNumber(1.1)];
     },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     scaledInitAssetWeight(price) {
       return this.initAssetWeight;
     },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     scaledInitLiabWeight(price) {
       return this.initLiabWeight;
     },
@@ -157,7 +161,7 @@ describe('maxWithdraw', () => {
     },
   } as any as Bank;
 
-  function makeGroup(bank0, bank1, vaultAmount) {
+  function makeGroup(bank0, bank1, vaultAmount): Group {
     return {
       getFirstBankByMint(mint) {
         if (mint.equals(bank0.mint)) {
@@ -190,7 +194,7 @@ describe('maxWithdraw', () => {
     return [group, bank0, bank1, account];
   }
 
-  function deposit(bank, account, amount) {
+  function deposit(bank, account, amount): void {
     const amountV = I80F48.fromNumber(amount);
     const indexedAmount = amountV.div(bank.depositIndex);
     if (indexedAmount.mul(bank.depositIndex).lt(amountV)) {
@@ -203,7 +207,7 @@ describe('maxWithdraw', () => {
     tp.indexedPosition.iadd(indexedAmount);
   }
 
-  function borrow(bank, account, amount) {
+  function borrow(bank, account, amount): void {
     const indexedAmount = I80F48.fromNumber(amount).div(bank.borrowIndex);
     bank.indexedBorrows.iadd(indexedAmount);
     const tp = account.tokens[bank.tokenIndex];
@@ -211,13 +215,14 @@ describe('maxWithdraw', () => {
     tp.indexedPosition.isub(indexedAmount);
   }
 
-  function maxWithdraw(group, account) {
+  function maxWithdraw(group, account): any {
     return account
       .getMaxWithdrawWithBorrowForToken(group, PublicKey.default)
       .toNumber();
   }
 
   it('full withdraw', (done) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [group, bank0, bank1, account] = setup(1000000);
     deposit(bank0, account, 100);
     expect(maxWithdraw(group, account)).equal(100);
@@ -225,6 +230,7 @@ describe('maxWithdraw', () => {
   });
 
   it('full withdraw limited vault', (done) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [group, bank0, bank1, account] = setup(90);
     deposit(bank0, account, 100);
     expect(maxWithdraw(group, account)).equal(90);
@@ -232,6 +238,7 @@ describe('maxWithdraw', () => {
   });
 
   it('full withdraw limited utilization', (done) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [group, bank0, bank1, account] = setup(1000000);
     const other = deepClone(account);
     deposit(bank0, account, 100);
@@ -282,7 +289,8 @@ describe('maxWithdraw', () => {
 
   it('withdraw limited health and scaling', (done) => {
     const [group, bank0, bank1, account] = setup(1000000);
-    bank0.scaledInitAssetWeight = function (price) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    bank0.scaledInitAssetWeight = function (price): any {
       const startScale = I80F48.fromNumber(50);
       if (this.nativeDeposits().gt(startScale)) {
         return this.initAssetWeight.div(this.nativeDeposits().div(startScale));
@@ -302,7 +310,8 @@ describe('maxWithdraw', () => {
 
   it('borrow limited health and scaling', (done) => {
     const [group, bank0, bank1, account] = setup(1000000);
-    bank0.scaledInitLiabWeight = function (price) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    bank0.scaledInitLiabWeight = function (price): any {
       const startScale = I80F48.fromNumber(50);
       if (this.nativeBorrows().gt(startScale)) {
         return this.initLiabWeight.mul(this.nativeBorrows().div(startScale));
