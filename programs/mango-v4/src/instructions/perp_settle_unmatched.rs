@@ -35,16 +35,18 @@ pub fn perp_settle_unmatched(
         MangoError::InvalidBank
     );
 
+    let clock = Clock::get()?;
+    let (now_ts, now_slot) = (clock.unix_timestamp as u64, clock.slot);
     // Get oracle prices
     let oracle_ref = &AccountInfoRef::borrow(ctx.accounts.oracle.as_ref())?;
     let oracle_price = perp_market.oracle_price(
         &OracleAccountInfos::from_reader(oracle_ref),
-        None, // staleness checked in health
+        Some((now_ts, now_slot)),
     )?;
     let settle_oracle_ref = &AccountInfoRef::borrow(ctx.accounts.settle_oracle.as_ref())?;
     let settle_token_oracle_price = settle_bank.oracle_price(
         &OracleAccountInfos::from_reader(settle_oracle_ref),
-        None, // staleness checked in health
+        Some((now_ts, now_slot)),
     )?;
 
     // Fetch perp position
@@ -93,11 +95,7 @@ pub fn perp_settle_unmatched(
     let token_position = account
         .token_position_mut(perp_market.settle_token_index)?
         .0;
-    settle_bank.withdraw_without_fee(
-        token_position,
-        settlement,
-        Clock::get()?.unix_timestamp.try_into().unwrap(),
-    )?;
+    settle_bank.withdraw_without_fee(token_position, settlement, now_ts)?;
 
     emit_stack(TokenBalanceLog {
         mango_group: ctx.accounts.group.key(),

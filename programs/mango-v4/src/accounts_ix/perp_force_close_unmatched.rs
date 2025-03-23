@@ -9,6 +9,8 @@ The instruction will close out the BTC-PERP position in each
  */
 const MAIN_GROUP_ID: Pubkey = pubkey!("78b8f4cGCwmZ9ysPFMWLaLTkkaYnUjwMJYStWe5RTSSX");
 const BTC_PERP_MARKET_PUBKEY: Pubkey = pubkey!("HwhVGkfsSQ9JSQeQYu2CbkRCLvsh3qRZxG6m4oMVwZpN");
+const DEV1: Pubkey = pubkey!("AUTjdCY1VXMbqL2axFrbuAu4NKiYJ28zR4hWANkbkHpy");
+const DEV2: Pubkey = pubkey!("DrnFiKkbyC5ga7LJDfDF8FzVcj6aoSUhsgirLjDMrBHH");
 #[derive(Accounts)]
 pub struct PerpForceCloseUnmatched<'info> {
     #[account(
@@ -36,4 +38,10 @@ pub struct PerpForceCloseUnmatched<'info> {
 
     /// CHECK: Oracle can have different account types, constrained by address in perp_market
     pub oracle: UncheckedAccount<'info>,
+
+    // This ix is intended to only be used temporarily for shutdown so we are gating access to two wallets
+    #[account(
+        constraint = dev.key() == DEV1 || dev.key() == DEV2
+    )]
+    pub dev: Signer<'info>,
 }
