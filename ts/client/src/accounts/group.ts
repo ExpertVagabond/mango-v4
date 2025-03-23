@@ -504,7 +504,7 @@ export class Group {
     let price, uiPrice, lastUpdatedSlot, provider, deviation;
     if (
       !BorshAccountsCoder.accountDiscriminator('stubOracle').compare(
-        ai.data.slice(0, 8),
+        new Uint8Array(ai.data.subarray(0, 8)),
       )
     ) {
       const stubOracle = coder.decode('stubOracle', ai.data);

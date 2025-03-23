@@ -73,8 +73,7 @@ export async function sendTransaction(
   // https://github.com/solana-labs/solana-web3.js/blob/master/packages/library-legacy/src/programs/compute-budget.ts#L202
   const computeUnitLimitIxFound = ixs.some(
     (ix) =>
-      ix.programId.equals(COMPUTE_BUDGET_PROGRAM_ID) &&
-      u8().decode(ix.data.subarray(0, 1)) == 2,
+      ix.programId.equals(COMPUTE_BUDGET_PROGRAM_ID) && u8().decode(new Uint8Array(ix.data.subarray(0, 1))) == 2,
   );
 
   if (!computeUnitLimitIxFound) {

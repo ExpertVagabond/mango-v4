@@ -447,7 +447,7 @@ export class MangoClient {
       },
       {
         memcmp: {
-          bytes: bs58.encode(bbuf),
+          bytes: bs58.encode(new Uint8Array(bbuf)),
           offset: 40,
         },
       },
@@ -860,7 +860,7 @@ export class MangoClient {
         },
         {
           memcmp: {
-            bytes: bs58.encode(tokenIndexBuf),
+            bytes: bs58.encode(new Uint8Array(tokenIndexBuf)),
             offset: 40,
           },
         },
@@ -1842,7 +1842,8 @@ export class MangoClient {
     const eq = decodeEventQueue(ai!.data);
     const orderedAccounts: PublicKey[] = eq
       .map((e) => e.openOrders)
-      .sort((a, b) => a.toBuffer().swap64().compare(b.toBuffer().swap64()));
+      .sort((a, b) => a.toBuffer().swap64().compare(new Uint8Array(b.toBuffer().swap64())));
+
     if (orderedAccounts.length == 0) {
       throw new Error(`Event queue is empty!`);
     }
@@ -1944,7 +1945,7 @@ export class MangoClient {
       bbuf.writeUInt16LE(baseTokenIndex);
       filters.push({
         memcmp: {
-          bytes: bs58.encode(bbuf),
+          bytes: bs58.encode(new Uint8Array(bbuf)),
           offset: 40,
         },
       });
@@ -1955,7 +1956,7 @@ export class MangoClient {
       qbuf.writeUInt16LE(quoteTokenIndex);
       filters.push({
         memcmp: {
-          bytes: bs58.encode(qbuf),
+          bytes: bs58.encode(new Uint8Array(qbuf)),
           offset: 42,
         },
       });

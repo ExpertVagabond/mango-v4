@@ -344,7 +344,7 @@ const deserializeJupiterIxAndAlt = async (
   swapTransaction: string,
 ): Promise<[TransactionInstruction[], AddressLookupTableAccount[]]> => {
   const parsedSwapTransaction = VersionedTransaction.deserialize(
-    Buffer.from(swapTransaction, 'base64'),
+      new Uint8Array(Buffer.from(swapTransaction, 'base64')),
   );
   const message = parsedSwapTransaction.message;
   // const lookups = message.addressTableLookups
