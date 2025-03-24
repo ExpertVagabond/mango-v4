@@ -122,17 +122,14 @@ pub fn token_force_close_borrows_with_token(
         let liqee_asset_indexed_position = liqee_asset_position.indexed_position;
         let liqee_assets_native_after = liqee_asset_position.native(asset_bank);
 
-        // Make sure we do not create borrows in asset token if asset token is in reduce only
-        require!(
-            !(asset_bank.are_borrows_reduce_only() && liqee_assets_native_after.is_negative()),
-            MangoError::TokenInReduceOnlyMode
-        );
-
         if liqee_assets_native_after.is_negative() {
             // This means we have created a borrow or expanded the borrow in the asset token
 
             // Make sure borrows are allowed in asset_token
-            require!(!asset_bank.are_borrows_reduce_only(), MangoError::TokenInReduceOnlyMode);
+            require!(
+                !asset_bank.are_borrows_reduce_only(),
+                MangoError::TokenInReduceOnlyMode
+            );
 
             // account constraint #3
             // Make sure liqee's health does not decrease in this case
