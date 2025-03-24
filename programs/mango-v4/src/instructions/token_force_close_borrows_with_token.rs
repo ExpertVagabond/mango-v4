@@ -65,15 +65,6 @@ pub fn token_force_close_borrows_with_token(
             (I80F48::ONE + liab_bank.liquidation_fee + liab_bank.platform_liquidation_fee)
                 * (I80F48::ONE + asset_bank.liquidation_fee + asset_bank.platform_liquidation_fee);
 
-        // account constraint #3
-        // only allow combination of asset and liab token,
-        // where liqee's health would be guaranteed to not decrease
-        require_gte!(
-            liab_bank.init_liab_weight,
-            asset_bank.init_liab_weight * fee_factor_total,
-            MangoError::SomeError
-        );
-
         let (liqee_asset_position, liqee_asset_raw_index) =
             liqee.token_position_and_raw_index(asset_token_index)?;
         let liqee_asset_native = liqee_asset_position.native(asset_bank);
@@ -136,6 +127,21 @@ pub fn token_force_close_borrows_with_token(
             !(asset_bank.are_borrows_reduce_only() && liqee_assets_native_after.is_negative()),
             MangoError::TokenInReduceOnlyMode
         );
+
+        if liqee_assets_native_after.is_negative() {
+            // This means we have created a borrow or expanded the borrow in the asset token
+
+            // Make sure borrows are allowed in asset_token
+            require!(!asset_bank.are_borrows_reduce_only(), MangoError::TokenInReduceOnlyMode);
+
+            // account constraint #3
+            // Make sure liqee's health does not decrease in this case
+            require_gte!(
+                liab_bank.init_liab_weight,
+                asset_bank.init_liab_weight * fee_factor_total,
+                MangoError::SomeError
+            );
+        }
 
         msg!(
             "Force closed {} liab for {} asset",
