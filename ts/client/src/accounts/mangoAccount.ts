@@ -32,6 +32,7 @@ import { HealthCache } from './healthCache';
 import { sbOnDemandProgram } from './oracle';
 import { PerpMarket, PerpMarketIndex, PerpOrder, PerpOrderSide } from './perp';
 import { MarketIndex, Serum3Side } from './serum3';
+
 export class MangoAccount {
   public name: string;
   public tokens: TokenPosition[];
@@ -586,6 +587,7 @@ export class MangoAccount {
     const mutTokenBank = deepClone<Bank>(tokenBank);
     const mutHealthCache = deepClone<HealthCache>(healthCache);
     const invalidHealthValue = MAX_I80F48().div(I80F48.fromNumber(2)).neg();
+
     function healthAfterWithdraw(amount: I80F48): I80F48 {
       const withdrawOfDepositsAmount = amount.min(existingTokenDeposits);
       const borrowAmount = amount.sub(withdrawOfDepositsAmount);
@@ -1263,7 +1265,7 @@ export class MangoAccount {
           '\n tokens:' +
           JSON.stringify(
             this.tokens
-              .filter((token, i) => token.isActive())
+              .filter((token) => token.isActive())
               .map((token, i) => token.toString(group, i)),
             null,
             4,
@@ -1305,6 +1307,7 @@ export class MangoAccount {
 
 export class TokenPosition {
   static TokenIndexUnset = 65535;
+
   static from(dto: TokenPositionDto): TokenPosition {
     return new TokenPosition(
       I80F48.from(dto.indexedPosition),
@@ -1429,6 +1432,7 @@ export class TokenPositionDto {
 
 export class Serum3Orders {
   static Serum3MarketIndexUnset = 65535;
+
   static from(dto: Serum3PositionDto): Serum3Orders {
     return new Serum3Orders(
       dto.openOrders,
@@ -1479,6 +1483,7 @@ export interface CumulativeFunding {
 
 export class PerpPosition {
   static PerpMarketIndexUnset = 65535;
+
   static from(dto: PerpPositionDto): PerpPosition {
     return new PerpPosition(
       dto.marketIndex as PerpMarketIndex,
@@ -1992,6 +1997,7 @@ export class PerpPositionDto {
 
 export class PerpOo {
   static OrderMarketUnset = 65535;
+
   static from(dto: PerpOoDto): PerpOo {
     return new PerpOo(dto.sideAndTree, dto.market, dto.clientId, dto.id);
   }
@@ -2007,6 +2013,7 @@ export class PerpOo {
     return this.orderMarket !== PerpOo.OrderMarketUnset;
   }
 }
+
 export class PerpOoDto {
   constructor(
     public sideAndTree: any,

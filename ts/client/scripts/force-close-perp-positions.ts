@@ -1,10 +1,10 @@
 import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
 import { Cluster, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import fs from 'fs';
-import { MangoAccount } from '../src/accounts/mangoAccount';
-import { PerpMarketIndex } from '../src/accounts/perp';
-import { MangoClient } from '../src/client';
-import { MANGO_V4_ID } from '../src/constants';
+import { MANGO_V4_ID, MangoAccount, MangoClient, PerpMarketIndex } from '../src';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const CLUSTER: Cluster =
   (process.env.CLUSTER_OVERRIDE as Cluster) || 'mainnet-beta';
@@ -28,9 +28,10 @@ async function forceClosePerpPositions(): Promise<void> {
       ),
     ),
   );
+
   const userWallet = new Wallet(user);
   const userProvider = new AnchorProvider(connection, userWallet, options);
-  const client = await MangoClient.connect(
+  const client = MangoClient.connect(
     userProvider,
     CLUSTER,
     MANGO_V4_ID[CLUSTER],
@@ -61,19 +62,26 @@ async function forceClosePerpPositions(): Promise<void> {
       a.getPerpPositionUi(group, PERP_MARKET_INDEX),
   );
 
+  for (const account of mangoAccounts) {
+    console.log(account.publicKey, account.getPerpPositionUi(group, PERP_MARKET_INDEX, true));
+  }
+
   let a: MangoAccount;
   let b: MangoAccount;
   let i = 0,
     j = mangoAccounts.length - 1;
 
-  // i iterates forward to 2nd last account, and b iterates backward till 2nd account
-  while (i < mangoAccounts.length - 1 && j > 0) {
-    if (i === j) {
-      break;
-    }
+  while (i < j) {
     a = mangoAccounts[i];
     b = mangoAccounts[j];
+
     // PerpForceClosePosition ix expects a to be long, and b to short
+    if (a.getPerpPositionUi(group, PERP_MARKET_INDEX) <= 0) {
+      throw new Error('Account A is not long');
+    } else if (b.getPerpPositionUi(group, PERP_MARKET_INDEX) >= 0) {
+      throw new Error('Account B is not short');
+    }
+
     const sig = await client.perpForceClosePosition(
       group,
       PERP_MARKET_INDEX,
@@ -81,12 +89,13 @@ async function forceClosePerpPositions(): Promise<void> {
       b,
     );
     console.log(
-      `PerpForceClosePosition ${a.publicKey} and ${
-        b.publicKey
-      } , sig https://explorer.solana.com/tx/${sig}?cluster=${
-        CLUSTER == 'devnet' ? 'devnet' : ''
-      }`,
+      `PerpForceClosePosition ${a.publicKey} and ${b.publicKey} , 
+      sig https://explorer.solana.com/tx/${sig}?cluster=${CLUSTER === 'devnet' ? 'devnet' : ''}`,
     );
+
+
+    // Add a wait here so that we're sure the accounts are updated
+    await sleep(1000);
     a = await a.reload(client);
     b = await b.reload(client);
     // Move to previous account once b's position is completely reduced
@@ -101,5 +110,10 @@ async function forceClosePerpPositions(): Promise<void> {
     }
   }
 }
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 forceClosePerpPositions();

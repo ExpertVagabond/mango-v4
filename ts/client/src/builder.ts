@@ -70,11 +70,11 @@ export function Builder<T>(
           if (type) {
             // A class name (identified by the constructor) was passed. Instantiate it with props.
             const obj: T = new type();
-            return () =>
+            return (): T & Record<string, unknown> & { [p: string]: unknown } =>
               Object.assign(obj as T & Record<string, unknown>, { ...built });
           } else {
             // No type information - just return the object.
-            return () => built;
+            return (): Record<string, unknown> => built;
           }
         }
 

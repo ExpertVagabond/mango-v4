@@ -1286,21 +1286,25 @@ describe('Health Cache', () => {
       I80F48.fromNumber(-2).div(clonedHc.tokenInfos[1].prices.oracle),
     );
     clonedHc.tokenInfos[1].prices.oracle.iadd(new I80F48(new BN(333333)));
-    expect(hc.tokenInfos[0].balanceSpot.eq(clonedHc.tokenInfos[0].balanceSpot))
-      .to.be.false;
-    expect(hc.tokenInfos[1].balanceSpot.eq(clonedHc.tokenInfos[1].balanceSpot))
-      .to.be.false;
+    expect(
+      hc.tokenInfos[0].balanceSpot.eq(clonedHc.tokenInfos[0].balanceSpot),
+    ).to.equals(false);
+    expect(
+      hc.tokenInfos[1].balanceSpot.eq(clonedHc.tokenInfos[1].balanceSpot),
+    ).to.equals(false);
     expect(
       hc.tokenInfos[1].prices.oracle.eq(clonedHc.tokenInfos[1].prices.oracle),
-    ).to.be.false;
+    ).to.equals(false);
     //one is unchanged
-    expect(hc.tokenInfos[2].balanceSpot.eq(clonedHc.tokenInfos[2].balanceSpot))
-      .to.be.true;
+    expect(
+      hc.tokenInfos[2].balanceSpot.eq(clonedHc.tokenInfos[2].balanceSpot),
+    ).to.equals(true);
 
     //do something stupid
     clonedHc['addProp'] = '123';
-    expect(hc['addProp'] === undefined && clonedHc['addProp'] === '123').to.be
-      .true;
+    expect(
+      hc['addProp'] === undefined && clonedHc['addProp'] === '123',
+    ).to.equals(true);
 
     clonedHc.adjustPerpInfo(
       0,
@@ -1312,11 +1316,11 @@ describe('Health Cache', () => {
     expect(
       clonedHc.perpInfos[0].baseLots.eq(hc.perpInfos[0].baseLots) &&
         clonedHc.perpInfos[0].quote.eq(hc.perpInfos[0].quote),
-    ).to.be.false;
+    ).to.equals(false);
 
     expect(
       clonedHc.healthRatio(HealthType.init).eq(hc.healthRatio(HealthType.init)),
-    ).to.be.false;
+    ).to.equals(false);
 
     done();
   });

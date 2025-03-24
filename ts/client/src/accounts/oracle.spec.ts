@@ -36,26 +36,26 @@ describe.only('Oracle', () => {
 
   it('can decode Orca CLMM oracles', async () => {
     const accInfo = await connection.getAccountInfo(Orca_SOL_USDC_Whirlpool);
-    expect(accInfo).not.to.be.null;
-    expect(isOrcaOracle(accInfo!)).to.be.true;
+    expect(accInfo).not.to.equal(null);
+    expect(isOrcaOracle(accInfo!)).to.equal(true);
 
     const other = await connection.getAccountInfo(Raydium_SOL_USDC_Whirlpool);
-    expect(isOrcaOracle(other!)).to.be.false;
+    expect(isOrcaOracle(other!)).to.equal(false);
 
     const quoteKey = deriveFallbackOracleQuoteKey(accInfo!);
-    expect(quoteKey.equals(USDC_MINT_MAINNET)).to.be.true;
+    expect(quoteKey.equals(USDC_MINT_MAINNET)).to.equal(true);
   });
 
   it('can decode Raydium CLMM oracles', async () => {
     const accInfo = await connection.getAccountInfo(Raydium_SOL_USDC_Whirlpool);
-    expect(accInfo).not.to.be.null;
-    expect(isRaydiumOracle(accInfo!)).to.be.true;
+    expect(accInfo).not.to.equal(null);
+    expect(isRaydiumOracle(accInfo!)).to.equal(true);
 
     const other = await connection.getAccountInfo(Orca_SOL_USDC_Whirlpool);
-    expect(isRaydiumOracle(other!)).to.be.false;
+    expect(isRaydiumOracle(other!)).to.equal(false);
 
     const quoteKey = deriveFallbackOracleQuoteKey(accInfo!);
-    expect(quoteKey.equals(USDC_MINT_MAINNET)).to.be.true;
+    expect(quoteKey.equals(USDC_MINT_MAINNET)).to.equal(true);
   });
 
   it.skip('can generate fixed fallback oracles', async () => {
