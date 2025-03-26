@@ -7,6 +7,7 @@ import {
   MANGO_V4_MAIN_GROUP,
   MangoClient,
   ONE_I80F48,
+  sleep,
   toUiDecimals,
 } from '../src';
 import { HealthCache } from '../src/accounts/healthCache';
@@ -170,10 +171,6 @@ function parseEnvBoolean(value: string | undefined): boolean {
 
   const truthyValues = ['true', '1', 'yes', 'y'];
   return truthyValues.includes(value.toLowerCase());
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 forceCloseAllBorrows();

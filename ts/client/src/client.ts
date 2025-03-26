@@ -2910,6 +2910,55 @@ export class MangoClient {
     return await this.sendAndConfirmTransactionForGroup(group, [ix]);
   }
 
+  public async perpForceCloseUnmatched(
+    group: Group,
+    perpMarketIndex: PerpMarketIndex,
+    account: MangoAccount,
+  ): Promise<MangoSignatureStatus> {
+    const perpMarket = group.getPerpMarketByMarketIndex(perpMarketIndex);
+    const ix = await this.program.methods
+      .perpForceCloseUnmatched()
+      .accounts({
+        group: group.publicKey,
+        perpMarket: perpMarket.publicKey,
+        account: account.publicKey,
+        oracle: perpMarket.oracle,
+        dev: (this.program.provider as AnchorProvider).wallet.publicKey,
+      })
+      .instruction();
+    return await this.sendAndConfirmTransactionForGroup(group, [ix]);
+  }
+
+  public async perpSettleUnmatched(
+    group: Group,
+    account: MangoAccount,
+    perpMarketIndex: PerpMarketIndex,
+    maxSettleAmount?: number,
+  ): Promise<MangoSignatureStatus> {
+    const perpMarket = group.getPerpMarketByMarketIndex(perpMarketIndex);
+    const settleBank = group.getFirstBankByTokenIndex(
+      perpMarket.settleTokenIndex,
+    );
+
+    const ix = await this.program.methods
+      .perpSettleUnmatched(
+        maxSettleAmount
+          ? toNative(maxSettleAmount, settleBank.mintDecimals)
+          : RUST_U64_MAX(),
+      )
+      .accounts({
+        group: group.publicKey,
+        perpMarket: perpMarket.publicKey,
+        account: account.publicKey,
+        oracle: perpMarket.oracle,
+        settleBank: settleBank.publicKey,
+        settleOracle: settleBank.oracle,
+        dev: (this.program.provider as AnchorProvider).wallet.publicKey,
+      })
+      .instruction();
+    return await this.sendAndConfirmTransactionForGroup(group, [ix]);
+  }
+
   public async perpCloseMarket(
     group: Group,
     perpMarketIndex: PerpMarketIndex,
@@ -4739,6 +4788,7 @@ export class MangoClient {
 
     return ixs;
   }
+
   public async tokenConditionalSwapCreatePremiumAuction(
     group: Group,
     account: MangoAccount,
@@ -5438,6 +5488,7 @@ export class MangoClient {
       transactionInstructions,
     );
   }
+
   public async modifySerum3Order(
     group: Group,
     orderId: BN,
