@@ -3,6 +3,7 @@ import { Cluster, Connection, Keypair, PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 import {
   Bank,
+  I80F48,
   MANGO_V4_ID,
   MANGO_V4_MAIN_GROUP,
   MangoClient,
@@ -11,6 +12,7 @@ import {
   toUiDecimals,
 } from '../src';
 import { HealthCache } from '../src/accounts/healthCache';
+import BN from 'bn.js';
 
 const CLUSTER: Cluster =
   (process.env.CLUSTER_OVERRIDE as Cluster) || 'mainnet-beta';
@@ -20,6 +22,7 @@ const USER_KEYPAIR =
   process.env.USER_KEYPAIR_OVERRIDE || process.env.MB_PAYER_KEYPAIR;
 const MANGO_ACCOUNT_PK = process.env.MANGO_ACCOUNT_PK;
 const DRY_RUN = parseEnvBoolean(process.env.DRY_RUN); // Set to true if you don't want to execute txs
+const DEPOSIT = parseEnvBoolean(process.env.DEPOSIT); // set to true if you just want to deposit into accounts
 
 async function forceCloseAllBorrows(): Promise<void> {
   const options = AnchorProvider.defaultOptions();
@@ -53,7 +56,7 @@ async function forceCloseAllBorrows(): Promise<void> {
       throw new Error('!');
     }
     const bank = v[0];
-    if (bank.uiBorrows() > 0) {
+    if (bank.uiBorrows() > 0 && bank.name !== 'USDC') {
       liabBanks.push(bank);
     }
   }
@@ -65,92 +68,138 @@ async function forceCloseAllBorrows(): Promise<void> {
   for (const liabBank of liabBanks) {
     // Find all mango accounts that have borrows in this liabBank then sort largest borrow to smallest borrow
     const accountsWithBorrows = allMangoAccounts
-      .filter((a) => a.getTokenBalanceUi(liabBank) < 0)
-      .sort(
-        (a, b) => a.getTokenBalanceUi(liabBank) - b.getTokenBalanceUi(liabBank),
-      );
+      .filter((a) => {
+        const hc = HealthCache.fromMangoAccount(group, a);
+        const i = hc.findTokenInfoIndex(liabBank.tokenIndex);
+        return i !== -1 && hc.tokenInfos[i].balanceSpot.isNeg();
+      })
+      .sort((a, b) => {
+        const hca = HealthCache.fromMangoAccount(group, a);
+        const hcb = HealthCache.fromMangoAccount(group, b);
+        return hca.tokenInfos[
+          hca.findTokenInfoIndex(liabBank.tokenIndex)
+        ].balanceSpot
+          .sub(
+            hcb.tokenInfos[hcb.findTokenInfoIndex(liabBank.tokenIndex)]
+              .balanceSpot,
+          )
+          .toNumber();
+      });
 
     for (const liqee of accountsWithBorrows) {
       console.log(
         `Liquidating ${liqee.publicKey} - ${liqee.getTokenBalanceUi(liabBank)} ${liabBank.name}`,
       );
-
-      // Find all assets of liqee
-      const assetBanks: Bank[] = [];
-      const hc = HealthCache.fromMangoAccount(group, liqee);
-      for (const tokenInfo of hc.tokenInfos) {
-        if (tokenInfo.balanceSpot.isPos()) {
-          const assetBank = group.getFirstBankByTokenIndex(
-            tokenInfo.tokenIndex,
-          );
-          assetBanks.push(assetBank);
+      if (!DEPOSIT) {
+        // Find all assets of liqee
+        const assetBanks: Bank[] = [];
+        const hc = HealthCache.fromMangoAccount(group, liqee);
+        for (const tokenInfo of hc.tokenInfos) {
+          if (tokenInfo.balanceSpot.isPos()) {
+            const assetBank = group.getFirstBankByTokenIndex(
+              tokenInfo.tokenIndex,
+            );
+            assetBanks.push(assetBank);
+          }
         }
-      }
-      // Sort assets by liq fee
-      assetBanks.sort((a, b) =>
-        a.liquidationFee
-          .add(a.platformLiquidationFee)
-          .sub(b.liquidationFee)
-          .sub(b.platformLiquidationFee)
-          .toNumber(),
-      );
+        // Sort assets by liq fee
+        assetBanks.sort((a, b) =>
+          a.liquidationFee
+            .add(a.platformLiquidationFee)
+            .sub(b.liquidationFee)
+            .sub(b.platformLiquidationFee)
+            .toNumber(),
+        );
 
-      // Now iterate over each asset and make sure you liquidate enough asset such that it does not go negative
-      const liabInfo = hc.tokenInfos.find(
-        (x) => x.tokenIndex === liabBank.tokenIndex,
-      )!;
-      for (const assetBank of assetBanks) {
-        const assetInfo = hc.tokenInfos.find(
-          (x) => x.tokenIndex === assetBank.tokenIndex,
+        // Now iterate over each asset and make sure you liquidate enough asset such that it does not go negative
+        const liabInfo = hc.tokenInfos.find(
+          (x) => x.tokenIndex === liabBank.tokenIndex,
         )!;
+        for (const assetBank of assetBanks) {
+          const assetInfo = hc.tokenInfos.find(
+            (x) => x.tokenIndex === assetBank.tokenIndex,
+          )!;
 
-        // TODO(dd) subtract epsilon so that rounding issues or oracle issues don't take asset to negative
-        const assetValueNative = assetInfo.balanceSpot.mul(
-          assetInfo.assetWeightedPrice(undefined),
-        );
+          const epsilon = I80F48.fromNumber(10000);
+          const assetValueNative = liqee
+            .getTokenDeposits(assetBank)
+            .mul(assetInfo.assetWeightedPrice(undefined))
+            .sub(epsilon);
 
-        // fee_factor_total = (1 + liab_liq_fee + liab_pliq_fee) * (1 + asset_liq_fee + asset_pliq_fee)
-        const feeFactorTotal = ONE_I80F48()
-          .add(liabBank.liquidationFee)
-          .add(liabBank.platformLiquidationFee)
-          .mul(
-            ONE_I80F48()
-              .add(assetBank.liquidationFee)
-              .add(assetBank.platformLiquidationFee),
+          if (!assetValueNative.isPos()) continue;
+
+          // fee_factor_total = (1 + liab_liq_fee + liab_pliq_fee) * (1 + asset_liq_fee + asset_pliq_fee)
+          const feeFactorTotal = ONE_I80F48()
+            .add(liabBank.liquidationFee)
+            .add(liabBank.platformLiquidationFee)
+            .mul(
+              ONE_I80F48()
+                .add(assetBank.liquidationFee)
+                .add(assetBank.platformLiquidationFee),
+            );
+
+          const maxLiabTransferNative = assetValueNative
+            .div(feeFactorTotal)
+            .div(liabInfo.liabWeightedPrice(undefined));
+          const maxLiabTransfer = toUiDecimals(
+            maxLiabTransferNative,
+            liabBank.mintDecimals,
           );
 
-        const maxLiabTransferNative = assetValueNative
-          .div(feeFactorTotal)
-          .div(liabInfo.liabWeightedPrice(undefined));
-        const maxLiabTransfer = toUiDecimals(
-          maxLiabTransferNative,
-          liabBank.mintDecimals,
-        );
-
-        console.log(
-          `liab - ${liabBank.name} - ${toUiDecimals(liabInfo.balanceSpot, liabBank.mintDecimals)} asset: ${assetBank.name} - ${toUiDecimals(assetInfo.balanceSpot, assetBank.mintDecimals)} maxLiabTransfer - ${maxLiabTransfer}`,
-        );
-
-        if (!DRY_RUN) {
-          const sig = await client.tokenForceCloseBorrowsWithToken(
-            group,
-            liqor,
-            liqee,
-            assetBank.tokenIndex,
-            liabBank.tokenIndex,
-            maxLiabTransfer,
+          console.log(
+            `liab - ${liabBank.name} - ${toUiDecimals(liabInfo.balanceSpot, liabBank.mintDecimals)} asset: ${assetBank.name} - ${toUiDecimals(assetInfo.balanceSpot, assetBank.mintDecimals)} maxLiabTransfer - ${maxLiabTransfer}`,
           );
-          console.log(` - sig ${sig.signature}`);
+          if (liabInfo.balanceSpot.isZero()) continue;
+          if (!DRY_RUN) {
+            try {
+              const sig = await client.tokenForceCloseBorrowsWithToken(
+                group,
+                liqor,
+                liqee,
+                assetBank.tokenIndex,
+                liabBank.tokenIndex,
+                maxLiabTransfer,
+              );
+              console.log(` - sig ${sig.signature}`);
 
-          // Reload account and see if there are still borrows left
-          await sleep(1000);
-          await liqee.reload(client);
+              // Reload account and see if there are still borrows left
+              await sleep(1000);
+              await Promise.all([liqee.reload(client), liqor.reload(client)]);
+            } catch (e) {
+              console.log(e);
+              continue;
+            }
+          }
+          // TODO handle dust borrows case
+          console.log(
+            `liqee ${liqee.publicKey} liab: ${liqee.getTokenBorrowsUi(liabBank)}`,
+          );
+          if (liqee.getTokenBorrowsUi(liabBank) === 0) break;
         }
-        // TODO handle dust borrows case
-        if (liqee.getTokenBorrowsUi(liabBank) === 0) break;
+      } else {
+        // Since total borrows are so low, just offset borrows with token deposits from liqor
+        try {
+          const liabNative = liqee.getTokenBorrows(liabBank);
+          console.log(
+            `depositing ${new BN(liabNative.ceil().toString())} or ${toUiDecimals(liabNative.ceil(), liabBank.mintDecimals)}`,
+          );
+          if (!DRY_RUN) {
+            const sig = await client.tokenDepositNative(
+              group,
+              liqee,
+              liabBank.mint,
+              new BN(liabNative.ceil().toString()),
+              true,
+              true,
+            );
+            console.log(`sig - ${sig.signature}`);
+            liqee.reload(client);
+            await sleep(100);
+          }
+        } catch (e) {
+          console.log(e);
+        }
       }
-      // TODO handle dust borrows case
-      if (liqee.getTokenBorrowsUi(liabBank) === 0) break;
     }
   }
 

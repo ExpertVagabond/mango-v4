@@ -64,9 +64,8 @@ async function perpForceCloseUnmatched(): Promise<void> {
       mangoAccount,
     );
     console.log(`sig - ${sig.signature}`);
-
-    await mangoAccount.reload(client);
     await sleep(1000);
+    await mangoAccount.reload(client);
     console.log(
       `mangoAccount: ${mangoAccount.publicKey} position: ${mangoAccount.getPerpPositionUi(group, PERP_MARKET_INDEX)}`,
     );
