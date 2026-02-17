@@ -1,4 +1,43 @@
-_work in progress_
+# Mango v4 — Solana Graveyard Revival
+
+> **Status: REVIVED** — Program compiles, deploys to localnet, 4/4 tests passing.
+> Revived for the [Solana Graveyard Hackathon](https://solana.com/graveyard-hack) (Migrations track, Feb 2026).
+
+## Revival Details
+
+| Item | Value |
+|------|-------|
+| Program ID | `4MangoMjqJ2firMokCjjGgoK8d4MXcrgL7XJaL3w6fVg` |
+| Framework | Anchor 0.28.0 |
+| Solana CLI | 1.18.26 (cargo-build-sbf) |
+| Binary Size | 3.5 MB |
+| Tests | 4/4 passing |
+| Track | Migrations ($7,000) |
+
+### What Was Fixed
+- Enabled `enable-gpl` feature by default (required for program entrypoint)
+- Set `HOST_CC=/usr/bin/clang` for blake3 native compilation on macOS
+- Generated test IDL and wrote JavaScript test suite from scratch
+- Configured `COPYFILE_DISABLE=1` for macOS resource fork compatibility
+
+### Build & Test
+
+```bash
+# Build
+export HOST_CC=/usr/bin/clang
+anchor build --no-idl -- --no-default-features --features enable-gpl,custom-heap
+
+# Test (requires solana-test-validator)
+cd tests && npm install
+COPYFILE_DISABLE=1 solana-test-validator --reset &
+anchor test --skip-build
+```
+
+### Tests
+1. **Creates a Mango Group** — Initializes group with insurance vault
+2. **Creates a stub oracle** — Deploys test price oracle (I80F48 format)
+3. **Duplicate rejection** — Verifies PDA uniqueness constraint
+4. **Group close** — Cleans up group and reclaims rent
 
 ## License
 
