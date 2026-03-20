@@ -20,7 +20,10 @@ pub fn token_register_trustless(
     require_neq!(token_index, QUOTE_TOKEN_INDEX);
     require_neq!(token_index, TokenIndex::MAX);
 
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let now_ts: u64 = Clock::get()?
+        .unix_timestamp
+        .try_into()
+        .map_err(|_| error!(MangoError::SomeError))?;
     {
         let mut group = ctx.accounts.group.load_mut()?;
         let week = 7 * 24 * 60 * 60;
@@ -138,7 +141,10 @@ pub fn token_register_trustless(
         vaults: Default::default(),
         oracle: ctx.accounts.oracle.key(),
         fallback_oracle: ctx.accounts.fallback_oracle.key(),
-        registration_time: Clock::get()?.unix_timestamp.try_into().unwrap(),
+        registration_time: Clock::get()?
+            .unix_timestamp
+            .try_into()
+            .map_err(|_| error!(MangoError::SomeError))?,
         reserved: [0; 2528],
     };
 

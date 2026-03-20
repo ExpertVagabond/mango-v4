@@ -470,7 +470,10 @@ pub fn flash_loan_end<'key, 'accounts, 'remaining, 'info>(
         let is_active = bank.change_without_fee(
             position,
             change_amount,
-            Clock::get()?.unix_timestamp.try_into().unwrap(),
+            Clock::get()?
+                .unix_timestamp
+                .try_into()
+                .map_err(|_| error!(MangoError::SomeError))?,
         )?;
         if !is_active {
             deactivated_token_positions.push(change.raw_token_index);

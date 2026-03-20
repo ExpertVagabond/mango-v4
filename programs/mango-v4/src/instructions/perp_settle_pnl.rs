@@ -36,7 +36,10 @@ pub fn perp_settle_pnl(ctx: Context<PerpSettlePnl>) -> Result<()> {
         account_b.token_position(settle_token_index)?;
     }
 
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let now_ts: u64 = Clock::get()?
+        .unix_timestamp
+        .try_into()
+        .map_err(|_| error!(MangoError::SomeError))?;
 
     let a_liq_end_health;
     let a_maint_health;

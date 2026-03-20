@@ -80,7 +80,10 @@ impl<'a, 'info> DepositCommon<'a, 'info> {
             bank.deposit(
                 position,
                 amount_i80f48,
-                Clock::get()?.unix_timestamp.try_into().unwrap(),
+                Clock::get()?
+                    .unix_timestamp
+                    .try_into()
+                    .map_err(|_| error!(MangoError::SomeError))?,
             )?
         };
 

@@ -41,7 +41,10 @@ pub fn perp_create_market(
     positive_pnl_liquidation_fee: f32,
     platform_liquidation_fee: f32,
 ) -> Result<()> {
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let now_ts: u64 = Clock::get()?
+        .unix_timestamp
+        .try_into()
+        .map_err(|_| error!(MangoError::SomeError))?;
 
     let mut perp_market = ctx.accounts.perp_market.load_init()?;
     *perp_market = PerpMarket {

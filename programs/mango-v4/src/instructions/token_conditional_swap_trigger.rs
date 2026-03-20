@@ -53,7 +53,10 @@ pub fn token_conditional_swap_trigger(
     );
     let buy_token_index = tcs.buy_token_index;
     let sell_token_index = tcs.sell_token_index;
-    let now_ts: u64 = Clock::get()?.unix_timestamp.try_into().unwrap();
+    let now_ts: u64 = Clock::get()?
+        .unix_timestamp
+        .try_into()
+        .map_err(|_| error!(MangoError::SomeError))?;
     let tcs_is_expired = tcs.is_expired(now_ts);
 
     // Possibly wipe the tcs and exit, if it's already expired
@@ -62,7 +65,8 @@ pub fn token_conditional_swap_trigger(
 
         let (buy_bank, _buy_token_price, sell_bank_and_oracle_opt) =
             account_retriever.banks_mut_and_oracles(buy_token_index, sell_token_index)?;
-        let (sell_bank, _sell_token_price) = sell_bank_and_oracle_opt.unwrap();
+        let (sell_bank, _sell_token_price) =
+            sell_bank_and_oracle_opt.ok_or_else(|| error!(MangoError::SomeError))?;
 
         let tcs = liqee.token_conditional_swap_mut_by_index(token_conditional_swap_index)?;
         *tcs = TokenConditionalSwap::default();
@@ -91,7 +95,8 @@ pub fn token_conditional_swap_trigger(
 
     let (buy_bank, buy_token_price, sell_bank_and_oracle_opt) =
         account_retriever.banks_mut_and_oracles(buy_token_index, sell_token_index)?;
-    let (sell_bank, sell_token_price) = sell_bank_and_oracle_opt.unwrap();
+    let (sell_bank, sell_token_price) =
+        sell_bank_and_oracle_opt.ok_or_else(|| error!(MangoError::SomeError))?;
 
     let (liqee_buy_change, liqee_sell_change) = action(
         &mut liqor.borrow_mut(),

@@ -32,7 +32,10 @@ pub fn account_edit(
 
     match (temporary_delegate_opt, temporary_delegate_expiry_opt) {
         (Some(temporary_delegate), Some(temporary_delegate_expiry)) => {
-            let now_ts: u64 = Clock::get().unwrap().unix_timestamp.try_into().unwrap();
+            let now_ts: u64 = Clock::get()?
+                .unix_timestamp
+                .try_into()
+                .map_err(|_| error!(MangoError::SomeError))?;
             require_gt!(now_ts + ONE_WEEK_SECONDS, temporary_delegate_expiry);
             account.fixed.temporary_delegate = temporary_delegate;
             account.fixed.temporary_delegate_expiry = temporary_delegate_expiry;
