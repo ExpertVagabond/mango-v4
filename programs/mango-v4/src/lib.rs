@@ -32,6 +32,47 @@ pub mod instructions;
 
 compile_error!("compiling the program entrypoint without 'enable-gpl' makes no sense, enable it or use the 'cpi' or 'client' features");
 
+// ---------------------------------------------------------------------------
+// Input validation helpers (Anchor uses typed contexts, these are supplementary)
+// ---------------------------------------------------------------------------
+
+/// Validate a token index is within the supported range.
+pub fn validate_token_index(index: u16) -> Result<u16> {
+    require!(index < 512, error::MangoError::SomeError);
+    Ok(index)
+}
+
+/// Validate a string name (e.g., token name) is not empty and within bounds.
+pub fn validate_name(name: &str) -> Result<()> {
+    require!(!name.is_empty(), error::MangoError::SomeError);
+    require!(name.len() <= 32, error::MangoError::SomeError);
+    require!(
+        name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == ' '),
+        error::MangoError::SomeError
+    );
+    Ok(())
+}
+
+/// Validate weight parameters are in sane ranges.
+pub fn validate_weight(weight: f32) -> Result<()> {
+    require!(weight.is_finite(), error::MangoError::SomeError);
+    require!(weight >= 0.0 && weight <= 10.0, error::MangoError::SomeError);
+    Ok(())
+}
+
+/// Validate fee rate is within acceptable bounds.
+pub fn validate_fee_rate(rate: f32) -> Result<()> {
+    require!(rate.is_finite(), error::MangoError::SomeError);
+    require!(rate >= 0.0 && rate <= 1.0, error::MangoError::SomeError);
+    Ok(())
+}
+
+/// Validate an amount is positive and within u64 range.
+pub fn validate_amount(amount: u64) -> Result<u64> {
+    require!(amount > 0, error::MangoError::SomeError);
+    Ok(amount)
+}
+
 use state::{
     IxGate, OpenbookV2MarketIndex, OracleConfigParams, PerpMarketIndex, PlaceOrderType,
     SelfTradeBehavior, Serum3MarketIndex, Side, TokenConditionalSwap,
